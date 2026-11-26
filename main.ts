@@ -47,8 +47,16 @@ function checkDeliverablesReady(): void {
 
 function handInEntry(): void {
   checkDeliverablesReady();
-  rmSync(OUTPUT_DIR, { recursive: true, force: true });
-  mkdirSync(OUTPUT_DIR, { recursive: true });
+  // Never remove OUTPUT_DIR itself: in the grader it is a mount point on a
+  // read-only filesystem and deleting it fails (exit 1). Empty only its
+  // contents, or create it when it does not exist yet.
+  if (existsSync(OUTPUT_DIR)) {
+    for (const entry of readdirSync(OUTPUT_DIR)) {
+      rmSync(join(OUTPUT_DIR, entry), { recursive: true, force: true });
+    }
+  } else {
+    mkdirSync(OUTPUT_DIR, { recursive: true });
+  }
   copyDeliverableFolder('game');
   copyDeliverableFolder('screenshots');
   const dossier = buildDossier(OUTPUT_DIR, DOSSIER_CAPS);
